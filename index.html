@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08090A">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Kein Name</title>
+<style>
+:root{
+  --breu:#08090A; --casco:#121316; --fenda:#232529; --fenda2:#2E3136;
+  --osso:#E6E3DC; --bruma:#8B8D94; --fumo:#5E616A;
+  --ambar:#C8873F; --gelo:#7FA8C4; --ferrugem:#9A5A4A; --verde:#6E8F6A;
+  --mono:ui-monospace,"Roboto Mono","DejaVu Sans Mono",Menlo,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--breu);color:var(--osso);font-family:var(--sans);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+#app{height:100%;display:flex;flex-direction:column;max-width:620px;margin:0 auto}
+.tela{flex:1;overflow-y:auto;padding:20px 16px 30px;display:none}
+.tela.ativa{display:block}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--fumo);margin:0 0 8px}
+h1{font-family:var(--mono);font-weight:500;font-size:25px;letter-spacing:-.02em;margin:0 0 4px;line-height:1.15}
+h2{font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--fumo);font-weight:500;margin:28px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--fenda)}
+
+/* ── nitidez: o medidor principal ── */
+.nitidez{border:1px solid var(--fenda);border-radius:14px;background:var(--casco);padding:15px;margin:14px 0 10px}
+.nitidez .top{display:flex;align-items:baseline;justify-content:space-between;font-family:var(--mono)}
+.nitidez .top b{font-size:26px;font-weight:500;letter-spacing:-.02em}
+.nitidez .top span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--fumo)}
+.barra{height:6px;border-radius:3px;background:var(--fenda);margin-top:11px;overflow:hidden}
+.barra i{display:block;height:100%;background:linear-gradient(90deg,var(--ferrugem),var(--ambar));transition:width .7s cubic-bezier(.2,.7,.2,1)}
+.nitidez p{margin:9px 0 0;font-size:12.5px;color:var(--bruma)}
+
+.linha{display:flex;gap:8px;margin:10px 0}
+.linha .cartao{flex:1;margin:0;text-align:center;padding:12px 6px}
+.linha .cartao b{display:block;font-family:var(--mono);font-size:22px;font-weight:500}
+.linha .cartao span{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--fumo)}
+.cartao{background:var(--casco);border:1px solid var(--fenda);border-radius:14px;padding:15px;margin:0 0 10px}
+.cartao h3{margin:0 0 5px;font-size:15.5px;font-weight:600}
+.cartao p{margin:0;font-size:13.5px;color:var(--bruma)}
+
+button,.btn{font-family:var(--sans);cursor:pointer;border-radius:12px;border:1px solid var(--fenda);background:transparent;color:var(--osso);padding:13px 16px;font-size:15px}
+button:active{transform:scale(.99)}
+button:focus-visible{outline:2px solid var(--ambar);outline-offset:2px}
+.principal{width:100%;background:var(--osso);color:var(--breu);border-color:var(--osso);font-weight:600;font-family:var(--mono);letter-spacing:.08em;text-transform:uppercase;font-size:13px;padding:16px;margin-top:4px}
+.fantasma{width:100%;margin-top:8px;color:var(--bruma);font-size:14px}
+.mini{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fumo);background:none;border:none;padding:10px;width:100%;margin-top:4px}
+
+/* ── letreiro de cena ── */
+.letreiro{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--fumo);border:1px solid var(--fenda);border-left:2px solid var(--ambar);border-radius:8px;padding:9px 11px;margin:0 0 18px;line-height:1.7}
+.letreiro b{display:block;color:var(--osso);font-size:12px;letter-spacing:.1em;font-weight:500}
+
+/* ── chat ── */
+#fluxo{padding-bottom:14px}
+.narr{color:var(--bruma);font-size:14px;font-style:italic;margin:18px 4px;text-align:center;line-height:1.65}
+.bolha{max-width:88%;margin:0 0 12px;padding:12px 14px;border-radius:16px 16px 16px 4px;background:var(--casco);border:1px solid var(--fenda)}
+.bolha .quem{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ambar);margin:0 0 7px}
+.bolha.en .quem{color:var(--gelo)}
+.bolha .txt{font-size:17.5px;line-height:1.6}
+.bolha .pt{font-size:13px;color:var(--bruma);margin-top:9px;padding-top:9px;border-top:1px solid var(--fenda);display:none}
+.bolha.aberta .pt{display:block}
+.bolha .ferramentas{display:flex;gap:6px;margin-top:11px}
+.bolha .ferramentas button{padding:7px 11px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fumo);border-radius:8px}
+
+/* ── A NÉVOA ── */
+.p{cursor:pointer;transition:filter .45s ease,opacity .45s ease;border-radius:3px}
+.p.n0{color:var(--fumo);letter-spacing:.04em}
+.bolha.en .p.n0{filter:blur(3px);opacity:.72;color:inherit;letter-spacing:normal}
+.p.n1{filter:blur(3px);opacity:.72}
+.p.n2{filter:blur(1.1px);opacity:.9}
+.p.n3{filter:none}
+.p.clara{filter:none!important;opacity:1!important;color:inherit!important;background:rgba(200,135,63,.12)}
+.bolha.en .p.clara{background:rgba(127,168,196,.12)}
+
+.eu{max-width:88%;margin:0 0 12px auto;padding:12px 14px;border-radius:16px 16px 4px 16px;background:var(--fenda);font-size:15px}
+.ops{display:flex;flex-direction:column;gap:8px;margin:6px 0 14px}
+.ops button{text-align:left;line-height:1.4}
+.ops button:active{background:var(--fenda)}
+
+.painel{border:1px solid var(--fenda);border-radius:14px;padding:15px;margin:0 0 14px;background:var(--casco)}
+.painel .rot{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--fumo);margin:0 0 8px}
+.painel h4{margin:0 0 6px;font-size:16px}
+.painel p{margin:0 0 12px;font-size:14px;color:var(--bruma)}
+.painel.missao{border-left:2px solid var(--ambar)}
+.painel.nota{border-left:2px solid var(--gelo)}
+.painel.dossie{border-left:2px solid var(--ferrugem)}
+.painel.claude{border-left:2px solid var(--osso)}
+.painel.baralho{border-left:2px solid var(--verde)}
+.painel a.link{display:block;text-align:center;text-decoration:none;color:var(--osso);border:1px solid var(--fenda2);border-radius:10px;padding:12px;font-size:14px;margin-bottom:8px}
+.selo{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ambar);border:1px solid var(--fenda2);border-radius:6px;padding:3px 7px;margin-bottom:10px}
+
+/* ── revisão ── */
+.carta{background:var(--casco);border:1px solid var(--fenda);border-radius:16px;padding:30px 20px;text-align:center;margin:12px 0}
+.carta .frente{font-size:26px;line-height:1.3}
+.carta .verso{font-size:17px;color:var(--bruma);margin-top:18px;padding-top:18px;border-top:1px solid var(--fenda);display:none}
+.carta.virada .verso{display:block}
+.carta .dica{font-size:13px;color:var(--fumo);margin-top:10px;font-style:italic}
+.direcao{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--fumo);margin-bottom:14px}
+.notas{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}
+.notas button{padding:14px 3px;font-family:var(--mono);font-size:10.5px;letter-spacing:.03em}
+.notas button.b0{border-color:var(--ferrugem);color:var(--ferrugem)}
+.notas button.b3{border-color:var(--verde);color:var(--verde)}
+
+/* ── mapa ── */
+.local{display:block;width:100%;text-align:left;background:var(--casco);border:1px solid var(--fenda);border-radius:14px;padding:15px;margin:0 0 10px}
+.local.destaque{border-left:2px solid var(--ambar)}
+.local.trancado{opacity:.45}
+.local h4{margin:0 0 4px;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.local p{margin:0;font-size:13px;color:var(--bruma)}
+.vinculo{display:inline-flex;gap:3px;vertical-align:middle}
+.vinculo i{width:6px;height:6px;border-radius:50%;background:var(--fenda2);display:block}
+.vinculo i.on{background:var(--ambar)}
+
+/* ── lupa ── */
+#lupa{position:fixed;left:0;right:0;bottom:0;background:var(--casco);border-top:1px solid var(--fenda2);padding:18px 18px calc(20px + env(safe-area-inset-bottom));transform:translateY(110%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:40;max-width:620px;margin:0 auto}
+#lupa.abre{transform:none}
+#lupa .w{font-family:var(--mono);font-size:22px;margin:0 0 6px}
+#lupa .m{font-size:15px;color:var(--bruma);margin:0 0 4px}
+#lupa .s{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--fumo)}
+#lupa .fechar{position:absolute;top:12px;right:12px;border:none;color:var(--fumo);font-size:20px;padding:6px 10px}
+
+.item{border-bottom:1px solid var(--fenda);padding:14px 0}
+.item:last-child{border-bottom:none}
+.item h4{margin:0 0 4px;font-size:15px}
+.item p{margin:0;font-size:13.5px;color:var(--bruma)}
+.tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:rgba(200,135,63,.13);color:var(--ambar);margin-left:6px;vertical-align:1px}
+.tag.en{background:rgba(127,168,196,.13);color:var(--gelo)}
+
+nav{display:flex;border-top:1px solid var(--fenda);background:rgba(8,9,10,.96);backdrop-filter:blur(10px);padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:none;border-radius:0;padding:11px 2px 13px;background:none;color:var(--fumo);font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+nav button .ic{display:block;font-size:16px;margin-bottom:3px;font-family:var(--sans)}
+nav button.ativa{color:var(--osso)}
+nav button .pip{display:inline-block;min-width:15px;padding:0 4px;background:var(--ambar);color:var(--breu);border-radius:8px;font-size:9px;margin-left:2px}
+
+.vazio{text-align:center;color:var(--fumo);font-size:14px;padding:44px 20px;line-height:1.7}
+.aviso{font-family:var(--mono);font-size:10.5px;color:var(--fumo);letter-spacing:.05em;line-height:1.7;text-align:center;margin:22px 0 0}
+textarea{width:100%;background:var(--casco);border:1px solid var(--fenda);border-radius:12px;color:var(--osso);font-family:var(--mono);font-size:12px;padding:12px;min-height:140px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <section class="tela ativa" id="t-estado"></section>
+  <section class="tela" id="t-historia"><div id="fluxo"></div></section>
+  <section class="tela" id="t-revisao"></section>
+  <section class="tela" id="t-dossie"></section>
+  <nav>
+    <button data-t="estado" class="ativa"><span class="ic">◎</span>Estado</button>
+    <button data-t="historia"><span class="ic">❝</span>História</button>
+    <button data-t="revisao"><span class="ic">▤</span>Revisão<span class="pip" id="pip" hidden></span></button>
+    <button data-t="dossie"><span class="ic">✦</span>Dossiê</button>
+  </nav>
+</div>
+<div id="lupa" hidden><button class="fechar" onclick="fecharLupa()">×</button><div id="lupaC"></div></div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   KEIN NAME — pacote v2
+   Alemão A1 do zero · Inglês A2
+   ══════════════════════════════════════════════════════════════ */
+const BUILD = 20;
+const yt = q => "https://www.youtube.com/results?search_query=" + encodeURIComponent(q);
+
+const PACOTE = {
+versao:2,
+personagens:{
+  hallmann:{nome:"Dra. Hallmann"}, marlene:{nome:"Marlene"},
+  jonas:{nome:"Jonas"}, teodor:{nome:"Teodor"}
+},
+
+/* ── LÉXICO ──────────────────────────────────────────────
+   tok = as formas de superfície que essa carta "limpa" na tela  */
+cartas:{
+ "de.gutenmorgen":{lang:"de",f:"Guten Morgen",v:"bom dia",tok:["guten","morgen"]},
+ "de.danke":{lang:"de",f:"Danke",v:"obrigado",tok:["danke"]},
+ "de.bitte":{lang:"de",f:"bitte",v:"por favor · de nada",tok:["bitte"]},
+ "de.ja":{lang:"de",f:"ja / nein",v:"sim / não",tok:["ja","nein"]},
+ "de.gut":{lang:"de",f:"gut",v:"bom, bem",tok:["gut","sehr"]},
+ "de.bett":{lang:"de",f:"das Bett",v:"a cama",dica:"neutro · das",tok:["bett"]},
+ "de.fenster":{lang:"de",f:"das Fenster",v:"a janela",dica:"neutro · das",tok:["fenster"]},
+ "de.tuer":{lang:"de",f:"die Tür",v:"a porta",dica:"feminino · die",tok:["tür"]},
+ "de.tisch":{lang:"de",f:"der Tisch",v:"a mesa",dica:"masculino · der",tok:["tisch"]},
+ "de.stuhl":{lang:"de",f:"der Stuhl",v:"a cadeira",dica:"masculino · der",tok:["stuhl"]},
+ "de.lampe":{lang:"de",f:"die Lampe",v:"a luz, o abajur",dica:"feminino · die",tok:["lampe"]},
+ "de.brot":{lang:"de",f:"das Brot",v:"o pão",dica:"neutro · das",tok:["brot"]},
+ "de.wasser":{lang:"de",f:"das Wasser",v:"a água",dica:"neutro · das",tok:["wasser"]},
+ "de.kaffee":{lang:"de",f:"der Kaffee",v:"o café",dica:"masculino · der",tok:["kaffee"]},
+ "de.milch":{lang:"de",f:"die Milch",v:"o leite",dica:"feminino · die",tok:["milch"]},
+ "de.fisch":{lang:"de",f:"der Fisch",v:"o peixe",dica:"masculino · der",tok:["fisch"]},
+ "de.netz":{lang:"de",f:"das Netz",v:"a rede",dica:"neutro · das",tok:["netz"]},
+ "de.boot":{lang:"de",f:"das Boot",v:"o barco",dica:"neutro · das",tok:["boot"]},
+ "de.hafen":{lang:"de",f:"der Hafen",v:"o porto",dica:"masculino · der",tok:["hafen"]},
+ "de.meer":{lang:"de",f:"das Meer",v:"o mar",dica:"neutro · das",tok:["meer"]},
+ "de.name":{lang:"de",f:"der Name",v:"o nome",dica:"masculino · der",tok:["name","namen"]},
+ "de.kopf":{lang:"de",f:"der Kopf",v:"a cabeça",dica:"masculino · der",tok:["kopf"]},
+ "de.geld":{lang:"de",f:"das Geld",v:"o dinheiro",dica:"neutro · das",tok:["geld"]},
+ "de.kalt":{lang:"de",f:"kalt / warm",v:"frio / quente",tok:["kalt","warm"]},
+ "de.heute":{lang:"de",f:"heute",v:"hoje",tok:["heute"]},
+ "de.hier":{lang:"de",f:"hier",v:"aqui",tok:["hier"]},
+ "de.wasistdas":{lang:"de",f:"Was ist das?",v:"o que é isso?",tok:["was","ist","das"]},
+ "de.wieheisstdu":{lang:"de",f:"Wie heißt du?",v:"como você se chama?",tok:["wie","heißt","heißen"]},
+ "de.ichheisse":{lang:"de",f:"Ich heiße ...",v:"eu me chamo ...",tok:["ich","heiße"]},
+ "de.ichweissnicht":{lang:"de",f:"Ich weiß nicht.",v:"eu não sei",tok:["weiß","nicht"]},
+ "de.ichverstehenicht":{lang:"de",f:"Ich verstehe nicht.",v:"eu não entendo",tok:["verstehe","verstehen"]},
+ "de.langsambitte":{lang:"de",f:"Langsam, bitte.",v:"devagar, por favor",tok:["langsam"]},
+ "de.nochmal":{lang:"de",f:"Noch mal.",v:"de novo",tok:["noch","mal"]},
+ "de.ichmoechte":{lang:"de",f:"Ich möchte ...",v:"eu queria ... (pedido educado)",tok:["möchte","möchtest"]},
+ "de.wieviel":{lang:"de",f:"Wie viel kostet das?",v:"quanto custa isso?",tok:["viel","kostet"]},
+ "de.haben":{lang:"de",f:"Haben Sie ...?",v:"o senhor tem ...?",tok:["haben"]},
+ "de.machen":{lang:"de",f:"machen",v:"fazer",tok:["machen","macht"]},
+
+ "en.wakeup":{lang:"en",f:"to wake up",v:"acordar",dica:"A2 · phrasal básico",tok:["wake up","woke up"]},
+ "en.lookfor":{lang:"en",f:"to look for",v:"procurar",dica:"A2 · phrasal básico",tok:["look for","looking for","looked for"]},
+ "en.findout":{lang:"en",f:"to find out",v:"descobrir",dica:"A2 · phrasal básico",tok:["find out","found out"]},
+ "en.washup":{lang:"en",f:"to wash up (on a beach)",v:"dar à costa, ser trazido pela maré",dica:"expressão marítima",tok:["washed up","wash up"]},
+ "en.makesense":{lang:"en",f:"It doesn't make sense.",v:"não faz sentido",dica:"A2 · frase inteira",tok:["make sense","makes sense"]},
+ "en.noidea":{lang:"en",f:"I have no idea.",v:"não faço ideia",dica:"A2 · frase inteira",tok:["no idea"]},
+ "en.atleast":{lang:"en",f:"at least",v:"pelo menos",dica:"A2 · conector",tok:["at least"]},
+ "en.onpurpose":{lang:"en",f:"on purpose",v:"de propósito",dica:"A2 · expressão",tok:["on purpose"]},
+ "en.keeptrack":{lang:"en",f:"to keep track of",v:"acompanhar, não perder de vista",tok:["keep track"]},
+ "en.takecare":{lang:"en",f:"to take care of",v:"cuidar de",dica:"A2 · phrasal básico",tok:["take care"]},
+ "en.rightnow":{lang:"en",f:"right now",v:"agora mesmo",dica:"A2",tok:["right now"]},
+ "en.becareful":{lang:"en",f:"Be careful.",v:"tome cuidado",dica:"A2",tok:["be careful","careful"]}
+},
+
+/* ── ESTRUTURA ── */
+arco:{cefr:"A1 · A2",titulo:"O Porto",
+ sinopse:"Stralsund, Báltico. Você acorda sem nome. Tudo à sua volta é alemão; no bolso do casaco, um caderno em inglês com a sua letra."},
+capitulos:[
+ {id:"c1",titulo:"Ruído",desc:"Nada se separa ainda. Só som.",cenas:["s1","s2","s3","s4","s5"],exame:"x1",portao:{min:0,vistas:0}},
+ {id:"c2",titulo:"Nomes",desc:"As coisas começam a ter borda.",cenas:["s6","s7","s8"],exame:"x2",portao:{min:40,vistas:14}}
+],
+
+/* ── LOCAIS (sempre tem o que fazer) ── */
+locais:{
+ pensao:{nome:"A pensão Voss",quem:"marlene",onde:"Rua do cais 4 · cheiro de pão",abre:1,micro:["mp1","mp2","mp3"]},
+ kai:{nome:"O cais norte",quem:"teodor",onde:"Vento, redes, gaivotas",abre:1,micro:["mk1","mk2","mk3"]},
+ boot:{nome:"O barco do Jonas",quem:"jonas",onde:"Motor parado, cheiro de diesel",abre:3,micro:["mb1","mb2"]},
+ praxis:{nome:"O consultório",quem:"hallmann",onde:"Desinfetante e uma ficha em branco",abre:6,micro:["mh1","mh2"]}
+},
+
+cenas:{
+
+s1:{titulo:"Kein Name",local:"Hospital · Stralsund",hora:"07:10 · nublado",nodes:[
+ {t:"narr",pt:"Luz branca. Cheiro de desinfetante e de maré. Uma mulher de jaleco está falando com você há algum tempo — você só percebe agora que as palavras eram para você."},
+ {t:"fala",quem:"hallmann",lang:"de",txt:"Guten Morgen. Können Sie mich hören?",pt:"Bom dia. Você consegue me ouvir?"},
+ {t:"narr",pt:"Você entende que é uma pergunta pela melodia — sobe no fim. Só isso. Toque em qualquer palavra para forçar o foco nela."},
+ {t:"fala",quem:"hallmann",lang:"de",txt:"Wie heißen Sie?",pt:"Como o senhor se chama?"},
+ {t:"escolha",pergunta:"Você procura o próprio nome e não acha nada.",ops:[
+  {txt:"Balbuciar qualquer som de volta.",flag:"tentou_falar",replica:{quem:"hallmann",lang:"de",txt:"Ganz ruhig. Ganz langsam.",pt:"Calma. Bem devagar."}},
+  {txt:"Ficar em silêncio e só ouvir.",flag:"ficou_calado",replica:{quem:"hallmann",lang:"de",txt:"Gut. Hören Sie einfach zu.",pt:"Bom. Apenas escute."}}]},
+ {t:"narr",pt:"Ela escreve algo. No lugar do nome, na ficha, deixa em branco e anota duas palavras que você vai ver muitas vezes ainda: KEIN NAME."},
+ {t:"cartas",ids:["de.gutenmorgen","de.ja"]},
+ {t:"dossie",id:"f1",titulo:"Ficha 001 — Stralsund",corpo:"Homem, ~20 anos. Encontrado no cais norte. Sem documento. Audição normal, fala ausente. Casaco continha um caderno manuscrito em inglês. Nome: em branco."},
+ {t:"nota",id:"n1",titulo:"Por que a tela está embaçada",corpo:"A névoa não é enfeite: é o seu ouvido desenhado na tela. Cada palavra aparece do jeito que você a escuta hoje.\n\nBloco sólido = som que você nunca separou do resto. Borrado = já passou por você, ainda não gruda. Nítido = já é sua.\n\nEla limpa sozinha conforme você reencontra a palavra nas cenas e acerta a carta na revisão. Você não aperta nada para isso acontecer. Reler uma cena velha daqui a duas semanas é a melhor medida de progresso que este app tem."},
+ {t:"missao",id:"m1",titulo:"Deixar o som entrar",desc:"20 minutos de canções infantis alemãs. Não tente entender. Olhe pela janela do trem. O alvo é o ritmo.",link:yt("kinderlieder zum mitsingen"),minutos:20,lang:"de"}]},
+
+s2:{titulo:"Die Pension",local:"Pensão Voss · cais",hora:"06:40 · chuva fina",nodes:[
+ {t:"narr",pt:"Três dias depois. Uma pensão de dois andares no cais, cheiro de pão. Marlene Voss tem sessenta e poucos anos e a decisão já tomada: com você, ela não fala outra língua."},
+ {t:"fala",quem:"marlene",lang:"de",txt:"Guten Morgen.",pt:"Bom dia."},
+ {t:"narr",pt:"Ela aponta para a cama. Depois para a janela. Depois para a porta. Uma coisa de cada vez, sempre no mesmo ritmo, sempre esperando."},
+ {t:"fala",quem:"marlene",lang:"de",txt:"Das Bett. Das Fenster. Die Tür.",pt:"A cama. A janela. A porta."},
+ {t:"escolha",pergunta:"Ela espera. Está claro que espera alguma coisa.",ops:[
+  {txt:"Repetir exatamente os sons que ela fez.",flag:"repetiu",replica:{quem:"marlene",lang:"de",txt:"Ja! Noch mal. Das Bett.",pt:"Sim! De novo. A cama."}},
+  {txt:"Apontar para a janela e olhar para ela.",flag:"apontou",replica:{quem:"marlene",lang:"de",txt:"Das Fenster. Gut.",pt:"A janela. Bom."}}]},
+ {t:"cartas",ids:["de.bett","de.fenster","de.tuer"]},
+ {t:"fala",quem:"marlene",lang:"de",txt:"Das Brot. Das Wasser. Der Tisch. Bitte.",pt:"O pão. A água. A mesa. Por favor."},
+ {t:"cartas",ids:["de.brot","de.wasser","de.tisch","de.danke","de.bitte"]},
+ {t:"nota",id:"n2",titulo:"Você já notou. Agora eu explico.",corpo:"Reparou que ela nunca diz só Brot? Vem sempre uma palavrinha antes: das, die, der. Todo substantivo alemão carrega um desses — é o gênero da palavra, e não existe lógica confiável para adivinhar.\n\nRegra da casa: você nunca guarda um substantivo sozinho, guarda com o artigo colado, como se fosse uma palavra só. Suas cartas já vêm assim. Não decore a lista de gêneros. Só nunca separe."},
+ {t:"missao",id:"m2",titulo:"O ritual da manhã",desc:"Amanhã, ao acordar, faça o percurso da Marlene em voz alta: cama, janela, porta, mesa, pão, água. Aponte de verdade. Todos os dias desta semana.",minutos:5,lang:"de"}]},
+
+s3:{titulo:"The Notebook",local:"Pensão Voss · cozinha",hora:"19:20 · vento sul",nodes:[
+ {t:"narr",pt:"O sobrinho de Marlene chega do turno nos barcos com o seu casaco na mão e o caderno já aberto. Ele fala com você em inglês — e alguma coisa em você acompanha sem esforço, o que é assustador."},
+ {t:"fala",quem:"jonas",lang:"en",foco:["washed up","look for"],txt:"So. You washed up on the north pier. No papers, no name. Only this notebook. I had to look for something with your name on it. There is nothing.",pt:"Então. Você deu à costa no cais norte. Sem documento, sem nome. Só este caderno. Tive que procurar alguma coisa com o seu nome. Não tem nada."},
+ {t:"narr",pt:"Você entende. Não tudo, mas o suficiente para o estômago afundar. O alemão é uma parede; o inglês é uma porta entreaberta."},
+ {t:"fala",quem:"jonas",lang:"en",foco:["make sense","looking for"],txt:"And it doesn't make sense. Nobody is looking for you. Nobody called the police. Nothing.",pt:"E não faz sentido. Ninguém está te procurando. Ninguém chamou a polícia. Nada."},
+ {t:"escolha",pergunta:"O caderno tem umas quarenta páginas. Só a primeira tem data.",ops:[
+  {txt:"Read me the first page.",flag:"leu_pagina",replica:{quem:"jonas",lang:"en",foco:["keep track"],txt:"Okay. The writing is bad, so wait a second. It says: keep track of everything. Trust the water, not the people.",pt:"Ok. A letra é ruim, então espera um pouco. Diz: acompanhe tudo. Confie na água, não nas pessoas."}},
+  {txt:"Pegar o caderno da mão dele.",flag:"pegou_caderno",replica:{quem:"jonas",lang:"en",foco:["be careful","take care"],txt:"Easy. It's yours. But be careful — take care of it and don't show it to people here.",pt:"Calma. É seu. Mas tome cuidado — cuide dele e não mostre para as pessoas daqui."}}]},
+ {t:"cartas",ids:["en.washup","en.lookfor","en.makesense","en.keeptrack"]},
+ {t:"dossie",id:"f2",titulo:"Caderno — página 1",corpo:"Keep track of everything. Trust the water, not the people.\n\nA letra é a sua. A data é de quatro meses atrás. As outras trinta e nove páginas não têm data nenhuma."},
+ {t:"nota",id:"n3",titulo:"Por que o inglês aparece quase limpo",corpo:"O alemão você está construindo do chão. O inglês não: você está em A2. Entende a linha geral de uma frase simples, tropeça no vocabulário menos comum e nas expressões que não se traduzem palavra por palavra.\n\nPor isso a névoa do inglês é seletiva. A frase inteira fica legível e só a expressão fica embaçada — porque é exatamente ali que você perde o sentido. Nada de aula de gramática básica: o inglês ganha frase inteira, phrasal verb comum e fala real. É assim que A2 vira B1, não com mais regra."},
+ {t:"missao",id:"m3",titulo:"Inglês de verdade, em A2",desc:"20 minutos de fala nativa lenta e não didática. Primeira passada sem legenda; se voltar, aí sim com legenda.",link:yt("slow english conversation podcast a2 real speech"),minutos:20,lang:"en"}]},
+
+s4:{titulo:"Der Alte am Kai",local:"Cais norte",hora:"05:55 · frio",nodes:[
+ {t:"narr",pt:"No cais há um velho que conserta redes e quase não fala. Chamam ele de Teodor. Quando fala, é curto. O resto do tempo ele assobia a mesma coisa."},
+ {t:"fala",quem:"teodor",lang:"de",txt:"Der Hafen. Das Meer. Kalt heute.",pt:"O porto. O mar. Frio hoje."},
+ {t:"narr",pt:"E volta a assobiar. Sobe, sobe, cai. Uma pausa. Sobe de novo, cai mais longe. Você percebe que consegue prever onde a melodia vai cair antes que ela caia."},
+ {t:"nota",id:"n4",titulo:"O que você acabou de fazer é o núcleo do método",corpo:"Prever onde a frase vai cair é prosódia — a melodia e o ritmo de uma língua. É a primeira coisa que um bebê aprende, meses antes de qualquer palavra, e é a última coisa que um adulto que estudou por livro adquire.\n\nA prosódia entra por exposição e não entra por explicação. Quando ela está no lugar, as palavras se separam quase sozinhas — e é literalmente isso que a névoa desta tela está desenhando."},
+ {t:"escolha",pergunta:"Ele para o assobio e olha para você.",ops:[
+  {txt:"Tentar assobiar de volta.",flag:"assobiou",replica:{quem:"teodor",lang:"de",txt:"Ha. Noch mal.",pt:"Ha. De novo."}},
+  {txt:"Dizer a única palavra que ele te deu.",flag:"repetiu_teodor",replica:{quem:"teodor",lang:"de",txt:"Der Hafen. Ja. Der.",pt:"O porto. Sim. Der."}}]},
+ {t:"cartas",ids:["de.hafen","de.meer","de.kalt","de.heute","de.nochmal"]},
+ {t:"missao",id:"m4",titulo:"Sete vezes a mesma música",desc:"Escolha UMA canção alemã e ouça sete vezes ao longo da semana. Sempre a mesma. Na sétima você vai estar antecipando frases inteiras sem saber o que significam — e é exatamente esse o ponto.",link:yt("deutsche volkslieder einfach langsam"),minutos:25,lang:"de"}]},
+
+s5:{titulo:"Langsam, bitte",local:"Pensão Voss · cozinha",hora:"07:05 · sol raso",nodes:[
+ {t:"narr",pt:"Uma semana na pensão. Marlene fala mais rápido a cada dia, de propósito. Hoje ela disse uma frase longa e esperou, com as mãos na cintura."},
+ {t:"fala",quem:"marlene",lang:"de",txt:"Also, was möchtest du heute machen, hm?",pt:"Então, o que você quer fazer hoje, hm?"},
+ {t:"escolha",pergunta:"Você pegou três sons no meio e perdeu o resto.",ops:[
+  {txt:"Langsam, bitte.",flag:"pediu_devagar",replica:{quem:"marlene",lang:"de",txt:"Langsam. Gut. Was — möchtest — du — heute — machen?",pt:"Devagar. Bom. O que — você quer — fazer — hoje?"}},
+  {txt:"Ich verstehe nicht.",flag:"pediu_traduzir",replica:{quem:"marlene",lang:"de",txt:"Kein Problem. Noch mal, langsam.",pt:"Sem problema. De novo, devagar."}}]},
+ {t:"cartas",ids:["de.langsambitte","de.ichverstehenicht","de.ichweissnicht","de.wasistdas","de.wieheisstdu","de.gut"]},
+ {t:"nota",id:"n5",titulo:"As quatro frases que valem mais que cem palavras",corpo:"Langsam, bitte · Noch mal · Ich verstehe nicht · Was ist das?\n\nEssas quatro não servem para conversar. Servem para manter a conversa viva quando você não entendeu — que é 90% do que vai acontecer nos próximos meses. Quem tem essas frases automáticas continua exposto ao idioma; quem não tem, trava e sai da conversa.\n\nElas são as primeiras que o app vai te cobrar também no sentido inverso: português → alemão."},
+ {t:"claude",titulo:"Praticar o ritual em voz alta",prompt:"Estou no jogo Kein Name, arco A1 alemão, capítulo 1 (Ruído), cena 5.\n\nFrases que já tenho: Guten Morgen / Langsam, bitte / Noch mal / Ich verstehe nicht / Ich weiß nicht / Was ist das? / Danke / bitte.\nSubstantivos com artigo: das Bett, das Fenster, die Tür, der Tisch, das Brot, das Wasser, die Lampe, der Hafen, das Meer.\n\nAja como Marlene Voss, dona da pensão. Fale comigo SÓ em alemão, com essas palavras e no máximo duas novas por vez. Aponte para as coisas do quarto e espere eu responder. Se eu travar, repita mais devagar em vez de traduzir. Só traduza se eu escrever: bitte übersetzen.\n\nNo fim me devolva: (1) as frases novas que apareceram, no formato frente | verso, e (2) uma linha dizendo se eu já posso seguir para o exame."},
+ {t:"missao",id:"m5",titulo:"Traduzir ao contrário",desc:"No trem da volta, produza as sete frases da semana a partir do português, de cabeça. Só as que saírem em menos de dois segundos contam como suas.",minutos:10,lang:"de"}]},
+
+x1:{titulo:"Sprechstunde",local:"Consultório · Dra. Hallmann",hora:"11:00",exame:true,nodes:[
+ {t:"narr",pt:"Ela não vai te avaliar por prova escrita. Vai conversar e ver o que aguenta de pé."},
+ {t:"fala",quem:"hallmann",lang:"de",txt:"Guten Morgen. Wie geht es Ihnen heute?",pt:"Bom dia. Como o senhor está hoje?"},
+ {t:"escolha",pergunta:"Responda com o que você tem.",ops:[
+  {txt:"Guten Morgen. Langsam, bitte.",replica:{quem:"hallmann",lang:"de",txt:"Sehr gut. Das ist ein ganzer Satz.",pt:"Muito bom. Isso é uma frase inteira."}},
+  {txt:"Ich weiß nicht.",replica:{quem:"hallmann",lang:"de",txt:"Auch eine Antwort. Und eine richtige.",pt:"Também é uma resposta. E uma correta."}}]},
+ {t:"fala",quem:"hallmann",lang:"de",txt:"Was ist das? Und das? Und das hier?",pt:"O que é isso? E isso? E isso aqui?"},
+ {t:"narr",pt:"Ela aponta para a janela, a mesa, a lâmpada. Você responde as três — e percebe, no meio, que respondeu sem traduzir por dentro."},
+ {t:"cartas",ids:["de.lampe","de.hier"]},
+ {t:"dossie",id:"f3",titulo:"Ficha 002 — Reavaliação",corpo:"Sete dias. Segmentação presente. Repetição espontânea presente. Memória autobiográfica: ausente.\n\nHallmann anotou uma última linha e não mostrou: O paciente entende inglês melhor do que deveria, para alguém que não lembra de tê-lo aprendido."},
+ {t:"nota",id:"n6",titulo:"O que mudou em uma semana",corpo:"Você não fala alemão. Mas o fluxo parou de ser uma parede: você corta a frase em pedaços, reconhece onde ela sobe e onde cai, e tem sete ferramentas para não sair da conversa quando não entende.\n\nVolte na cena 1 agora e leia de novo. É o mesmo texto. Não é a mesma tela."}]},
+
+/* ── CAPÍTULO 2 ── */
+s6:{titulo:"Der Markt",local:"Mercado do porto",hora:"08:15 · movimento",nodes:[
+ {t:"narr",pt:"Marlene te arrasta para o mercado com uma cesta vazia e nenhuma intenção de ajudar. Ela fica dois passos atrás, de braços cruzados."},
+ {t:"fala",quem:"marlene",lang:"de",txt:"Du machst das heute. Ich warte hier.",pt:"Hoje quem faz é você. Eu espero aqui."},
+ {t:"narr",pt:"O homem do balcão olha para você. Tem peixe, pão, leite e café atrás dele."},
+ {t:"escolha",pergunta:"Você precisa pedir alguma coisa.",ops:[
+  {txt:"Ich möchte Brot, bitte.",flag:"pediu_pao",replica:{quem:"marlene",lang:"de",txt:"Ha! Ein Satz. Und wie viel kostet das?",pt:"Ha! Uma frase. E quanto custa isso?"}},
+  {txt:"Apontar e dizer: Das, bitte.",flag:"apontou_mercado",replica:{quem:"marlene",lang:"de",txt:"Funktioniert. Aber morgen mit Wörtern.",pt:"Funciona. Mas amanhã com palavras."}}]},
+ {t:"cartas",ids:["de.ichmoechte","de.wieviel","de.geld","de.milch","de.kaffee","de.fisch"]},
+ {t:"nota",id:"n7",titulo:"Ich möchte é o seu primeiro verbo útil",corpo:"Você acabou de pular etapa e não percebeu. Cursos ensinam ich will (eu quero) primeiro; na rua ninguém usa isso com estranho, soa como criança exigindo.\n\nIch möchte é a forma educada, e serve para tudo: comida, informação, ajuda. Um substantivo depois dela já é uma frase completa e correta. Você tem trinta substantivos com artigo. Isso significa que você acabou de ganhar trinta frases."},
+ {t:"missao",id:"m6",titulo:"Trinta pedidos",desc:"Andando pela rua, cada objeto que você reconhecer vira Ich möchte + o objeto, em voz baixa. Trinta ao longo do dia. Errar o artigo conta igual.",minutos:15,lang:"de"}]},
+
+s7:{titulo:"The Second Page",local:"Barco do Jonas · doca 3",hora:"21:40 · sem lua",nodes:[
+ {t:"narr",pt:"Jonas chama você no barco quando não tem mais ninguém na doca. Ele está com o caderno e uma lanterna, e não está confortável."},
+ {t:"fala",quem:"jonas",lang:"en",foco:["found out","on purpose"],txt:"I found out something and I don't like it. Page two is not in the same ink. Somebody wrote it later. Maybe you, maybe not — but it was done on purpose.",pt:"Descobri uma coisa e não gostei. A página dois não é da mesma tinta. Alguém escreveu depois. Talvez você, talvez não — mas foi de propósito."},
+ {t:"escolha",pergunta:"Ele espera antes de virar a página.",ops:[
+  {txt:"What does it say?",flag:"perguntou_pagina2",replica:{quem:"jonas",lang:"en",foco:["no idea","at least"],txt:"One word and a number. Inge. And 04:15. I have no idea what it means, but at least it's a name.",pt:"Uma palavra e um número. Inge. E 04:15. Não faço ideia do que significa, mas pelo menos é um nome."}},
+  {txt:"Don't read it. Give me the notebook.",flag:"recusou_pagina2",replica:{quem:"jonas",lang:"en",foco:["right now","take care"],txt:"Fine. Take it right now and take care of it. But you should know there is a name in there.",pt:"Tá bom. Pega agora e cuida dele. Mas você devia saber que tem um nome aí dentro."}}]},
+ {t:"cartas",ids:["en.findout","en.onpurpose","en.noidea","en.atleast","en.rightnow","en.takecare"]},
+ {t:"dossie",id:"f4",titulo:"Caderno — página 2",corpo:"Inge. 04:15.\n\nTinta diferente. Letra parecida com a sua, mas mais apressada. Marlene ficou branca quando você disse esse nome em voz alta no café da manhã, e depois disse que não conhecia ninguém assim."},
+ {t:"claude",titulo:"Contar a página 2 para a Marlene",prompt:"Estou no jogo Kein Name, capítulo 2 (Nomes), cena 7. Meu inglês é A2 e meu alemão é A1 inicial.\n\nAja como Marlene Voss. Eu vou tentar te contar, em alemão de A1, que encontrei o nome Inge no caderno. Você sabe quem é Inge e não quer falar sobre isso — desvia, oferece café, muda de assunto, mas não mente descaradamente.\n\nRegras: só alemão, frases curtas, no máximo duas palavras novas por resposta. Se eu travar, repita devagar em vez de traduzir. Se eu escrever bitte übersetzen, aí sim traduza.\n\nNo fim me devolva as frases novas no formato frente | verso."}]},
+
+s8:{titulo:"Das ist mein Netz",local:"Cais norte",hora:"06:10 · maré baixa",nodes:[
+ {t:"narr",pt:"Teodor empurra uma rede rasgada para o seu lado do banco e entrega a agulha sem dizer nada. Fica claro que você vai passar a manhã ali."},
+ {t:"fala",quem:"teodor",lang:"de",txt:"Das Netz. Das Boot. Der Fisch. Alles hier hat einen Namen.",pt:"A rede. O barco. O peixe. Tudo aqui tem um nome."},
+ {t:"escolha",pergunta:"Ele aponta para a rede na sua mão e espera.",ops:[
+  {txt:"Das ist das Netz.",flag:"nomeou_rede",replica:{quem:"teodor",lang:"de",txt:"Gut. Und jetzt: Das ist mein Netz.",pt:"Bom. E agora: Essa é a minha rede."}},
+  {txt:"Wie heißt das?",flag:"perguntou_nome",replica:{quem:"teodor",lang:"de",txt:"Das Netz. Noch mal. Das Netz.",pt:"A rede. De novo. A rede."}}]},
+ {t:"cartas",ids:["de.netz","de.boot","de.name","de.machen","de.haben"]},
+ {t:"nota",id:"n8",titulo:"Você acabou de produzir, não só reconhecer",corpo:"Reparou que a revisão começou a te dar cartas ao contrário — português na frente, alemão atrás? Isso não é enfeite.\n\nReconhecer é barato: o cérebro só precisa achar a resposta numa lista. Produzir é caro: ele precisa construir do nada. São duas memórias diferentes, e só a segunda serve para falar.\n\nPor isso a carta invertida só aparece depois que a versão fácil já amadureceu. Se ela aparecesse antes, você iria travar e desistir — e é exatamente por isso que baralho de curso não funciona."},
+ {t:"missao",id:"m7",titulo:"Nomear a casa inteira",desc:"Post-its ou não, tanto faz: percorra o seu quarto e nomeie dez objetos com artigo, em voz alta. Os que você não souber, anote em português e me traga na próxima conversa.",minutos:10,lang:"de"}]},
+
+x2:{titulo:"Zweite Sprechstunde",local:"Consultório · Dra. Hallmann",hora:"11:00",exame:true,nodes:[
+ {t:"narr",pt:"Hallmann tem a ficha na mão e uma pergunta que ela claramente já preparou."},
+ {t:"fala",quem:"hallmann",lang:"de",txt:"Sagen Sie mir bitte: was möchten Sie heute machen?",pt:"Me diga, por favor: o que o senhor quer fazer hoje?"},
+ {t:"escolha",pergunta:"Dessa vez você entendeu a pergunta inteira.",ops:[
+  {txt:"Ich möchte den Hafen sehen.",replica:{quem:"hallmann",lang:"de",txt:"Interessant. Warum den Hafen?",pt:"Interessante. Por que o porto?"}},
+  {txt:"Ich möchte einen Namen.",replica:{quem:"hallmann",lang:"de",txt:"...Das ist die erste Antwort, die Sie selbst gebaut haben.",pt:"...Essa é a primeira resposta que o senhor construiu sozinho."}}]},
+ {t:"dossie",id:"f5",titulo:"Ficha 003 — Inge",corpo:"Hallmann parou de escrever quando você disse Inge.\n\nEla não perguntou onde você ouviu. Perguntou quando. E anotou a hora exata da sua resposta."},
+ {t:"nota",id:"n9",titulo:"Fim do capítulo 2",corpo:"Duas semanas atrás toda a tela era bloco sólido. Volte na cena 1 e olhe a diferença — é a mesma frase da Hallmann, e agora metade dela tem borda.\n\nO próximo pacote abre o capítulo 3 (Vozes), onde as pessoas começam a falar entre si na sua frente sem esperar por você. Exporte o progresso no Dossiê e me mande."}]}
+},
+
+/* ── MICRO-CENAS: sempre disponíveis, repetíveis ── */
+micro:{
+mp1:{quem:"marlene",titulo:"Café da manhã",nodes:[
+ {t:"fala",quem:"marlene",lang:"de",txt:"Kaffee oder Milch?",pt:"Café ou leite?"},
+ {t:"escolha",pergunta:"Ela já está com as duas mãos ocupadas.",ops:[
+  {txt:"Kaffee, bitte.",replica:{quem:"marlene",lang:"de",txt:"Gut. Schwarz. Wie immer.",pt:"Bom. Preto. Como sempre."}},
+  {txt:"Milch, bitte.",replica:{quem:"marlene",lang:"de",txt:"Milch. Wie ein Kind.",pt:"Leite. Como criança."}}]},
+ {t:"cartas",ids:["de.kaffee","de.milch"]}]},
+mp2:{quem:"marlene",titulo:"A cadeira quebrada",nodes:[
+ {t:"fala",quem:"marlene",lang:"de",txt:"Der Stuhl ist kaputt. Was machen wir?",pt:"A cadeira está quebrada. O que a gente faz?"},
+ {t:"escolha",pergunta:"Ela testa a cadeira com a mão e olha para você.",ops:[
+  {txt:"Ich weiß nicht.",replica:{quem:"marlene",lang:"de",txt:"Ehrlich. Auch gut.",pt:"Honesto. Também serve."}},
+  {txt:"Ich möchte helfen.",replica:{quem:"marlene",lang:"de",txt:"Oh! Ein ganzer Satz. Komm.",pt:"Oh! Uma frase inteira. Vem."}}]},
+ {t:"cartas",ids:["de.stuhl","de.machen"]}]},
+mp3:{quem:"marlene",titulo:"O que ela não conta",vinculo:3,nodes:[
+ {t:"narr",pt:"Ela está sentada no escuro da cozinha quando você desce de madrugada. Não acende a luz."},
+ {t:"fala",quem:"marlene",lang:"de",txt:"Du schläfst nicht. Ich auch nicht.",pt:"Você não dorme. Eu também não."},
+ {t:"fala",quem:"marlene",lang:"de",txt:"Manchmal ist ein Name ein Problem. Nicht immer ein Geschenk.",pt:"Às vezes um nome é um problema. Nem sempre um presente."}]},
+
+mk1:{quem:"teodor",titulo:"Maré e vento",nodes:[
+ {t:"fala",quem:"teodor",lang:"de",txt:"Kalt heute. Das Meer ist ruhig.",pt:"Frio hoje. O mar está calmo."},
+ {t:"escolha",pergunta:"Ele te entrega um café de garrafa térmica sem perguntar.",ops:[
+  {txt:"Danke.",replica:{quem:"teodor",lang:"de",txt:"Hm.",pt:"Hm."}},
+  {txt:"Das Meer ist kalt.",replica:{quem:"teodor",lang:"de",txt:"Ja. Sehr kalt. Gut gesagt.",pt:"Sim. Muito frio. Bem dito."}}]},
+ {t:"cartas",ids:["de.kalt","de.meer"]}]},
+mk2:{quem:"teodor",titulo:"A rede",nodes:[
+ {t:"fala",quem:"teodor",lang:"de",txt:"Das Netz. Der Fisch. Das Boot. Noch mal.",pt:"A rede. O peixe. O barco. De novo."},
+ {t:"escolha",pergunta:"Ele repete três vezes e depois cala.",ops:[
+  {txt:"Repetir os três.",replica:{quem:"teodor",lang:"de",txt:"Ja. Langsam ist gut.",pt:"Sim. Devagar é bom."}},
+  {txt:"Was ist das?",replica:{quem:"teodor",lang:"de",txt:"Das ist das Netz. Immer das Netz.",pt:"Isso é a rede. Sempre a rede."}}]},
+ {t:"cartas",ids:["de.netz","de.fisch","de.boot"]}]},
+mk3:{quem:"teodor",titulo:"O que ele viu naquela noite",vinculo:3,nodes:[
+ {t:"narr",pt:"Ele para de consertar a rede. É a primeira vez que ele te olha por mais de dois segundos."},
+ {t:"fala",quem:"teodor",lang:"de",txt:"Ich war hier. In der Nacht. Das Wasser war nicht ruhig.",pt:"Eu estava aqui. Naquela noite. A água não estava calma."},
+ {t:"fala",quem:"teodor",lang:"de",txt:"Ein Boot. Kein Name am Boot.",pt:"Um barco. Sem nome no barco."}]},
+
+mb1:{quem:"jonas",titulo:"On the boat",nodes:[
+ {t:"fala",quem:"jonas",lang:"en",foco:["wake up","look for"],txt:"You wake up at five every day. Nobody does that here unless they are looking for something.",pt:"Você acorda às cinco todo dia. Ninguém faz isso aqui, a não ser que esteja procurando alguma coisa."},
+ {t:"escolha",pergunta:"Ele não está acusando. Está curioso.",ops:[
+  {txt:"I don't know what I'm looking for.",replica:{quem:"jonas",lang:"en",foco:["make sense"],txt:"That makes sense, actually. Keep doing it.",pt:"Isso até faz sentido. Continua fazendo."}},
+  {txt:"The water. I like the water.",replica:{quem:"jonas",lang:"en",foco:["be careful"],txt:"Yeah. Just be careful with the north pier at night.",pt:"É. Só toma cuidado com o cais norte à noite."}}]},
+ {t:"cartas",ids:["en.wakeup","en.becareful"]}]},
+mb2:{quem:"jonas",titulo:"The engine",nodes:[
+ {t:"fala",quem:"jonas",lang:"en",foco:["find out","take care"],txt:"The engine died again. I have to find out why before Friday. Can you hold this and take care not to drop it?",pt:"O motor morreu de novo. Tenho que descobrir por quê antes de sexta. Segura isso e cuidado para não deixar cair."},
+ {t:"cartas",ids:["en.findout","en.takecare"]}]},
+
+mh1:{quem:"hallmann",titulo:"Kontrolle",nodes:[
+ {t:"fala",quem:"hallmann",lang:"de",txt:"Wie ist Ihr Kopf heute? Gut? Nicht gut?",pt:"Como está a sua cabeça hoje? Bem? Não bem?"},
+ {t:"escolha",pergunta:"Ela já está com a caneta no ar.",ops:[
+  {txt:"Gut, danke.",replica:{quem:"hallmann",lang:"de",txt:"Gut. Kurz und richtig.",pt:"Bom. Curto e correto."}},
+  {txt:"Ich weiß nicht.",replica:{quem:"hallmann",lang:"de",txt:"Auch eine Antwort.",pt:"Também é uma resposta."}}]},
+ {t:"cartas",ids:["de.kopf"]}]},
+mh2:{quem:"hallmann",titulo:"Die Karte",nodes:[
+ {t:"narr",pt:"Ela vira a ficha para você. No campo do nome, ainda: KEIN NAME."},
+ {t:"fala",quem:"hallmann",lang:"de",txt:"Der Name kommt zurück. Oder nicht. Wir warten.",pt:"O nome volta. Ou não. A gente espera."},
+ {t:"cartas",ids:["de.name"]}]}
+}
+};
+
+/* ══════════════════════════════════════════════════════════════
+   MOTOR
+   ══════════════════════════════════════════════════════════════ */
+const CHAVE="keinname.v2";
+const NOVAS_DIA=5, PASSOS=[1,10];       // minutos dos passos de aprendizado
+const DIA=864e5, MIN=6e4;
+
+const padrao={minutos:0,feitas:[],cena:null,cartas:{},entrada:[],novas:{d:0,n:0},
+  exposicao:{},flags:{},vinculo:{},micros:{},dossie:[],notas:[],missoes:{},ultimoAcesso:0};
+let E=Object.assign({},padrao,JSON.parse(localStorage.getItem(CHAVE)||"{}"));
+const salvar=()=>localStorage.setItem(CHAVE,JSON.stringify(E));
+const $=s=>document.querySelector(s);
+const agora=()=>Date.now();
+const diaHoje=()=>Math.floor(Date.now()/DIA);
+const esc=t=>String(t).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const atr=t=>String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+             .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+const norm=w=>w.toLowerCase().replace(/[^a-zäöüßáéíóú]/g,"");
+
+/* índice palavra/expressão → carta */
+const IDX={};
+Object.entries(PACOTE.cartas).forEach(([id,c])=>(c.tok||[]).forEach(t=>{ if(!IDX[t]) IDX[t]=id; }));
+
+/* ── VOZ ── */
+let VOZES=[],destravada=false;
+const carregarVozes=()=>{try{VOZES=window.speechSynthesis?speechSynthesis.getVoices()||[]:[]}catch(e){VOZES=[]}return VOZES};
+if(window.speechSynthesis){speechSynthesis.onvoiceschanged=carregarVozes;carregarVozes();}
+function destravarVoz(){if(destravada||!window.speechSynthesis)return;
+  try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u);destravada=true;}catch(e){}carregarVozes();}
+document.addEventListener("pointerdown",destravarVoz,{once:true});
+function falar(t,lang){
+  if(!window.speechSynthesis)return alert("Este navegador não tem síntese de voz.");
+  destravarVoz();
+  const tentar=n=>{
+    carregarVozes();
+    if(!VOZES.length){ if(n>0)return setTimeout(()=>tentar(n-1),300);
+      return alert("Nenhuma voz instalada.\n\nAndroid: Configurações → Acessibilidade → Saída de texto em voz → Serviços de fala do Google → Instalar dados de voz (alemão e inglês)."); }
+    const alvo=lang.toLowerCase(),base=alvo.slice(0,2);
+    const v=VOZES.find(x=>(x.lang||"").replace("_","-").toLowerCase()===alvo)
+         ||VOZES.find(x=>(x.lang||"").toLowerCase().startsWith(base));
+    if(!v)return alert("Falta a voz de "+base+".\n\nInstaladas: "+VOZES.map(x=>x.lang).join(", "));
+    const u=new SpeechSynthesisUtterance(t);u.voice=v;u.lang=v.lang;u.rate=.8;
+    if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
+    setTimeout(()=>speechSynthesis.speak(u),90);
+  };tentar(6);
+}
+
+/* ══ SRS: caixa de entrada → aprendizado → revisão → produção ══ */
+function rolarDia(){ const d=diaHoje(); if(E.novas.d!==d){E.novas={d:d,n:0};salvar();} }
+function enfileirar(id){
+  const k=id+"|r";
+  if(E.cartas[k]||E.entrada.includes(k))return;
+  E.entrada.push(k);
+}
+function promoverProducao(){
+  Object.keys(E.cartas).forEach(k=>{
+    if(!k.endsWith("|r"))return;
+    const c=E.cartas[k];
+    if(c.fase==="rev"&&c.ok>=3&&c.int>=5){
+      const p=k.slice(0,-2)+"|p";
+      if(!E.cartas[p]&&!E.entrada.includes(p))E.entrada.push(p);
+    }
+  });
+}
+function puxarNovas(){
+  rolarDia();
+  let n=0;
+  while(E.novas.n<NOVAS_DIA&&E.entrada.length){
+    const k=E.entrada.shift();
+    E.cartas[k]={fase:"aprend",passo:0,ef:2.5,int:0,rep:0,ok:0,prox:agora()};
+    E.novas.n++;n++;
+  }
+  if(n)salvar();
+  return n;
+}
+const devidas=()=>Object.keys(E.cartas).filter(k=>E.cartas[k].prox<=agora())
+  .sort((a,b)=>(E.cartas[a].fase==="aprend"?0:1)-(E.cartas[b].fase==="aprend"?0:1)||E.cartas[a].prox-E.cartas[b].prox);
+const maduras=()=>Object.keys(E.cartas).filter(k=>E.cartas[k].fase==="rev"&&E.cartas[k].ok>=3&&E.cartas[k].int>=5).length;
+const vistas=()=>Object.keys(E.cartas).length;
+
+function avaliar(k,q){
+  const c=E.cartas[k];
+  if(c.fase==="aprend"){
+    if(q===0){c.passo=0;c.prox=agora()+PASSOS[0]*MIN;}
+    else if(q===3){c.fase="rev";c.int=2;c.ok=1;c.rep=1;c.prox=agora()+2*DIA;}
+    else{
+      c.passo+= (q>=2?1:0);
+      if(c.passo>=PASSOS.length){c.fase="rev";c.int=1;c.ok=1;c.rep=1;c.prox=agora()+DIA;}
+      else c.prox=agora()+PASSOS[c.passo]*MIN;
+    }
+  }else{
+    if(q<2){ c.fase="aprend";c.passo=0;c.int=1;c.rep=0;c.ok=Math.max(0,c.ok-1);c.prox=agora()+PASSOS[1]*MIN; }
+    else{
+      c.ok++;c.rep++;
+      c.int=c.rep===1?1:c.rep===2?3:Math.max(1,Math.round(c.int*c.ef));
+      c.ef=Math.max(1.3,c.ef+(0.1-(3-q)*(0.08+(3-q)*0.02)));
+      c.prox=agora()+c.int*DIA;
+    }
+  }
+  promoverProducao();salvar();
+}
+
+/* ══ NÉVOA ══ */
+function nitidezChave(chave){
+  const id=IDX[chave];
+  let n=0;
+  if(id){
+    const c=E.cartas[id+"|r"];
+    if(c) n = c.fase==="rev" ? (c.ok>=3&&c.int>=5 ? 3 : 2) : 1;
+    else if(E.entrada.includes(id+"|r")) n=1;
+  }
+  const ex=E.exposicao[chave]||0;
+  const ne=ex>=6?3:ex>=3?2:ex>=1?1:0;
+  return Math.max(n,ne);
+}
+function nevoaHTML(f){
+  if(f.lang==="en"){
+    let h=esc(f.txt);
+    (f.foco||[]).forEach(p=>{
+      const re=new RegExp("("+p.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","i");
+      const n=nitidezChave(p.toLowerCase());
+      h=h.replace(re,'<span class="p n'+n+'" data-k="'+atr(p.toLowerCase())+'">$1</span>');
+    });
+    return h;
+  }
+  return f.txt.split(/(\s+)/).map(w=>{
+    const nu=norm(w);
+    if(!nu)return esc(w);
+    const n=nitidezChave(nu);
+    const vis=n===0?"▓".repeat(Math.min(9,Math.max(2,nu.length))):esc(w);
+    return '<span class="p n'+n+'" data-k="'+atr(nu)+'" data-real="'+atr(w)+'">'+vis+"</span>";
+  }).join("");
+}
+function contarExposicao(nodes){
+  const add=f=>{
+    if(f.lang==="en"){(f.foco||[]).forEach(p=>{const k=p.toLowerCase();E.exposicao[k]=(E.exposicao[k]||0)+1;});}
+    else f.txt.split(/\s+/).forEach(w=>{const k=norm(w);if(k)E.exposicao[k]=(E.exposicao[k]||0)+1;});
+  };
+  nodes.forEach(n=>{
+    if(n.t==="fala")add(n);
+    if(n.t==="escolha"&&n.escolhido!==undefined)add(n.ops[n.escolhido].replica);
+  });
+  salvar();
+}
+/* medidor: % de palavras alemãs já vistas que estão com borda */
+function nitidezGeral(){
+  const set=new Set();
+  E.feitas.forEach(id=>{
+    const c=PACOTE.cenas[id];if(!c)return;
+    c.nodes.forEach(n=>{
+      if(n.t==="fala"&&n.lang==="de")n.txt.split(/\s+/).forEach(w=>{const k=norm(w);if(k)set.add(k);});
+    });
+  });
+  if(!set.size)return{pct:0,tot:0};
+  let ok=0;set.forEach(k=>{if(nitidezChave(k)>=2)ok++;});
+  return{pct:Math.round(ok/set.size*100),tot:set.size};
+}
+
+/* ── progresso da história ── */
+const capAtual=()=>PACOTE.capitulos.find(c=>[...c.cenas,c.exame].some(x=>x&&!E.feitas.includes(x)))||PACOTE.capitulos[PACOTE.capitulos.length-1];
+const portaoOk=c=>E.minutos>=c.portao.min&&vistas()>=c.portao.vistas;
+function proximaCena(){
+  for(const cap of PACOTE.capitulos){
+    if(!portaoOk(cap))return null;
+    for(const c of cap.cenas)if(!E.feitas.includes(c))return c;
+    if(cap.exame&&!E.feitas.includes(cap.exame))return cap.exame;
+  }
+  return null;
+}
+const vinc=q=>E.vinculo[q]||0;
+function microDisponiveis(local){
+  return (PACOTE.locais[local].micro||[]).filter(id=>{
+    const m=PACOTE.micro[id];
+    return !m.vinculo||vinc(m.quem)>=m.vinculo;
+  });
+}
+
+/* ── navegação ── */
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>ir(b.dataset.t));
+function ir(t){
+  document.querySelectorAll(".tela").forEach(x=>x.classList.remove("ativa"));
+  $("#t-"+t).classList.add("ativa");
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("ativa",b.dataset.t===t));
+  ({estado:telaEstado,historia:telaHistoria,revisao:telaRevisao,dossie:telaDossie})[t]();
+  pip();
+}
+function pip(){const n=devidas().length,el=$("#pip");el.hidden=!n;el.textContent=n;}
+
+/* ══ TELA: ESTADO ══ */
+function telaEstado(){
+  rolarDia();
+  const cap=capAtual(),nt=nitidezGeral(),d=devidas().length;
+  const podeNovas=E.entrada.length&&E.novas.n<NOVAS_DIA;
+  const ausencia=E.ultimoAcesso?Math.floor((agora()-E.ultimoAcesso)/DIA):0;
+  const prox=proximaCena();
+  const trancado=!portaoOk(cap);
+
+  $("#t-estado").innerHTML=`
+   <p class="eyebrow">Arco ${PACOTE.arco.cefr} · ${esc(PACOTE.arco.titulo)} · build ${BUILD}</p>
+   <h1>${esc(cap.titulo)}</h1>
+   <p style="color:var(--bruma);font-size:14px;margin:6px 0 0">${esc(cap.desc)}</p>
+
+   <div class="nitidez">
+     <div class="top"><b>${nt.pct}%</b><span>nitidez do alemão</span></div>
+     <div class="barra"><i style="width:${nt.pct}%"></i></div>
+     <p>${nt.tot?`${nt.tot} palavras já apareceram na sua frente. Essa é a fatia que já tem borda.`:"Comece a primeira cena para o medidor ligar."}</p>
+   </div>
+
+   ${ausencia>=2?`<div class="cartao" style="border-left:2px solid var(--ambar)">
+      <h3>Bilhete na porta</h3>
+      <p>“Das Brot ist auf dem Tisch. Ich bin am Hafen. — M.”<br><span style="color:var(--fumo);font-size:12px">Marlene deixou isso nos ${ausencia} dias em que você não apareceu. Nada quebrou.</span></p></div>`:""}
+
+   <div class="linha">
+     <div class="cartao"><b>${d}</b><span>a revisar</span></div>
+     <div class="cartao"><b>${Math.max(0,NOVAS_DIA-E.novas.n)}</b><span>novas hoje</span></div>
+     <div class="cartao"><b>${(E.minutos/60).toFixed(1)}h</b><span>de input</span></div>
+   </div>
+
+   <button class="principal" onclick="doisMinutos()">${d?`Dois minutos · ${d} carta${d>1?"s":""}`:podeNovas?"Dois minutos · palavras novas":"Dois minutos · uma cena curta"}</button>
+   ${trancado
+     ? `<div class="cartao" style="border-color:var(--ferrugem);margin-top:12px"><h3>${esc(cap.titulo)} ainda não abre</h3>
+        <p>Falta ${Math.max(0,cap.portao.min-E.minutos)} min de input e ${Math.max(0,cap.portao.vistas-vistas())} palavras iniciadas. As cenas curtas do mapa contam para as duas coisas.</p></div>`
+     : prox?`<button class="fantasma" onclick="ir('historia')">Continuar a história</button>`
+     : `<button class="fantasma" onclick="ir('historia')">Ir ao mapa</button>`}
+
+   <h2>Missões abertas</h2>
+   ${missoesAbertas()}
+   <p class="aviso">Funciona sem sinal. Os links das missões, não.<br>Não existe streak aqui. Faltou um dia, o contador só não anda.</p>
+   <button class="mini" onclick="diagVoz()">diagnóstico de voz</button>`;
+  E.ultimoAcesso=agora();salvar();
+}
+function diagVoz(){carregarVozes();alert("build "+BUILD+"\nVozes: "+VOZES.length+(VOZES.length?"\n\n"+VOZES.map(x=>x.lang+" — "+x.name).join("\n"):""));}
+function doisMinutos(){
+  if(devidas().length)return ir("revisao");
+  if(E.entrada.length&&E.novas.n<NOVAS_DIA){puxarNovas();return ir("revisao");}
+  ir("historia");
+}
+function missoesAbertas(){
+  const ab=[];
+  Object.values(PACOTE.cenas).forEach(cn=>cn.nodes.forEach(n=>{
+    if(n.t==="missao"&&E.missoes[n.id]===false)ab.push(n);}));
+  if(!ab.length)return `<p class="vazio" style="padding:22px">Nenhuma missão aberta.<br>Elas aparecem no meio das cenas.</p>`;
+  return ab.map(m=>`<div class="item"><h4>${esc(m.titulo)}<span class="tag ${m.lang==="en"?"en":""}">${m.lang}</span></h4>
+    <p>${esc(m.desc)}</p>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      ${m.link?`<a class="btn" style="flex:1;text-align:center;text-decoration:none;font-size:13px" href="${m.link}" target="_blank" rel="noopener">Abrir</a>`:""}
+      <button style="flex:1;font-size:13px" onclick="concluirMissao('${m.id}',${m.minutos})">Concluí (+${m.minutos}min)</button>
+    </div></div>`).join("");
+}
+function concluirMissao(id,min){if(!E.missoes[id]){E.missoes[id]=true;E.minutos+=min;salvar();}telaEstado();}
+
+/* ══ TELA: HISTÓRIA (mapa + cena) ══ */
+function telaHistoria(){ E.cena?desenharCena():desenharMapa(); }
+function desenharMapa(){
+  const prox=proximaCena(),cap=capAtual();
+  let h=`<p class="eyebrow">Stralsund</p><h1>Onde você vai hoje</h1>
+    <p style="color:var(--bruma);font-size:14px;margin:6px 0 18px">As cenas curtas podem ser refeitas. Elas não avançam a trama, mas limpam a névoa e contam para o próximo capítulo.</p>`;
+  if(prox&&portaoOk(cap)){
+    const c=PACOTE.cenas[prox];
+    h+=`<button class="local destaque" onclick="abrirCena('${prox}')">
+      <h4>${esc(c.titulo)}<span class="tag">história</span></h4>
+      <p>${esc(c.local)} · ${esc(c.hora)}</p></button>`;
+  }
+  Object.entries(PACOTE.locais).forEach(([id,l])=>{
+    const aberto=E.feitas.length>=l.abre;
+    const v=vinc(l.quem),disp=microDisponiveis(id);
+    h+=`<button class="local ${aberto?"":"trancado"}" ${aberto?`onclick="abrirLocal('${id}')"`:"disabled"}>
+      <h4>${esc(l.nome)}<span class="vinculo">${[0,1,2,3,4].map(i=>`<i class="${i<v?"on":""}"></i>`).join("")}</span></h4>
+      <p>${aberto?esc(l.onde)+" · "+disp.length+" cena"+(disp.length>1?"s":"")+" curta"+(disp.length>1?"s":""):"Ainda não faz parte da sua rotina."}</p></button>`;
+  });
+  if(E.feitas.length){
+    h+=`<h2>Reler</h2><p style="color:var(--bruma);font-size:13.5px;margin:0 0 12px">Mesmo texto, tela diferente. É o único jeito honesto de ver o progresso.</p>`;
+    E.feitas.forEach(id=>{const c=PACOTE.cenas[id];if(!c)return;
+      h+=`<button class="local" onclick="abrirCena('${id}')"><h4>${esc(c.titulo)}</h4><p>${esc(c.local)}</p></button>`;});
+  }
+  $("#fluxo").innerHTML=h;$("#t-historia").scrollTop=0;
+}
+function abrirLocal(id){
+  const disp=microDisponiveis(id);
+  if(!disp.length)return;
+  const feitos=disp.map(m=>E.micros[m]||0);
+  const menor=Math.min(...feitos);
+  const alvo=disp[feitos.indexOf(menor)];
+  abrirMicro(alvo,PACOTE.locais[id].quem);
+}
+function abrirCena(id){E.cena={tipo:"cena",id:id,idx:0};salvar();desenharCena();}
+function abrirMicro(id,quem){PACOTE.micro[id].nodes.forEach(n=>{if(n.t==="escolha")delete n.escolhido;});
+  E.cena={tipo:"micro",id:id,idx:0,quem:quem};salvar();desenharCena();}
+const cenaObj=()=>E.cena.tipo==="cena"?PACOTE.cenas[E.cena.id]:PACOTE.micro[E.cena.id];
+
+function desenharCena(){
+  const c=cenaObj();
+  let h="";
+  if(E.cena.tipo==="cena")h+=`<div class="letreiro"><b>${esc(c.titulo)}</b>${esc(c.local)}<br>${esc(c.hora)}</div>`;
+  else h+=`<div class="letreiro"><b>${esc(c.titulo)}</b>cena curta · ${esc(PACOTE.personagens[c.quem].nome)}</div>`;
+  const ate=Math.min(E.cena.idx,c.nodes.length-1);
+  for(let i=0;i<=ate;i++)h+=noHTML(c.nodes[i],i,i===ate);
+  const ultimo=c.nodes[ate];
+  if(E.cena.idx>=c.nodes.length-1&&(ultimo.t!=="escolha"||ultimo.escolhido!==undefined))
+    h+=`<button class="principal" style="margin-top:14px" onclick="fecharCena()">Encerrar</button>`;
+  $("#fluxo").innerHTML=h;$("#t-historia").scrollTop=9e6;
+}
+function noHTML(n,i,ultimo){
+  const seg=ultimo&&n.t!=="escolha"?`<button class="principal" style="margin-top:10px" onclick="avancar()">Continuar</button>`:"";
+  switch(n.t){
+   case "narr":return `<p class="narr">${esc(n.pt)}</p>`+seg;
+   case "fala":return bolha(n)+seg;
+   case "escolha":
+     return `<p class="narr">${esc(n.pergunta)}</p>`+(n.escolhido!==undefined
+      ?`<div class="eu">${esc(n.ops[n.escolhido].txt)}</div>`+bolha(n.ops[n.escolhido].replica)
+        +(ultimo?`<button class="principal" style="margin-top:10px" onclick="avancar()">Continuar</button>`:"")
+      :`<div class="ops">${n.ops.map((o,k)=>`<button onclick="escolher(${i},${k})">${esc(o.txt)}</button>`).join("")}</div>`);
+   case "cartas":{
+     n.ids.forEach(enfileirar);salvar();
+     const novas=n.ids.filter(id=>!E.cartas[id+"|r"]).length;
+     return `<div class="painel baralho"><p class="rot">Caixa de entrada</p>
+       <h4>+${n.ids.length} palavras para a fila</h4>
+       <p>${n.ids.map(id=>esc(PACOTE.cartas[id].f)).join(" · ")}</p>
+       <p style="margin:0;color:var(--fumo);font-size:12.5px">Elas não caem todas no baralho de uma vez. Entram no máximo ${NOVAS_DIA} por dia, na ordem em que a história deu.</p>
+       </div>`+seg;}
+   case "missao":{
+     if(E.missoes[n.id]===undefined){E.missoes[n.id]=false;salvar();}
+     const f=E.missoes[n.id];
+     return `<div class="painel missao"><p class="rot">Missão · ${n.lang} · ${n.minutos} min</p>
+       <h4>${esc(n.titulo)}</h4><p>${esc(n.desc)}</p>
+       ${n.link?`<a class="link" href="${n.link}" target="_blank" rel="noopener">Abrir material</a>`:""}
+       <button style="width:100%" onclick="concluirNaCena('${n.id}',${n.minutos})">${f?"✓ concluída":"Marcar como concluída"}</button>
+       </div>`+seg;}
+   case "nota":
+     if(!E.notas.includes(n.id)){E.notas.push(n.id);salvar();}
+     return `<div class="painel nota"><span class="selo">explicação liberada</span>
+       <h4>${esc(n.titulo)}</h4><p style="white-space:pre-line;color:var(--osso)">${esc(n.corpo)}</p></div>`+seg;
+   case "dossie":
+     if(!E.dossie.includes(n.id)){E.dossie.push(n.id);salvar();}
+     return `<div class="painel dossie"><p class="rot">Fragmento recuperado</p>
+       <h4>${esc(n.titulo)}</h4><p style="white-space:pre-line">${esc(n.corpo)}</p></div>`+seg;
+   case "claude":
+     return `<div class="painel claude"><p class="rot">Conversa ao vivo</p><h4>${esc(n.titulo)}</h4>
+       <p>Esta parte é com o Claude. Copie o roteiro, cole na conversa, faça a cena por lá e volte.</p>
+       <button type="button" style="width:100%" data-copiar="${atr(n.prompt)}">Copiar roteiro</button></div>`+seg;
+  }
+  return "";
+}
+function bolha(f){
+  if(!f)return "";
+  const en=f.lang==="en";
+  return `<div class="bolha ${en?"en":""}">
+    <p class="quem">${esc(PACOTE.personagens[f.quem]?.nome||"")}</p>
+    <div class="txt">${nevoaHTML(f)}</div>
+    <div class="pt">${esc(f.pt)}</div>
+    <div class="ferramentas">
+      <button type="button" data-ouvir="${atr(f.txt)}" data-lang="${en?"en-US":"de-DE"}">▶ ouvir</button>
+      <button type="button" data-trad="1">tradução</button>
+    </div></div>`;
+}
+function escolher(i,k){
+  const c=cenaObj(),n=c.nodes[i];
+  n.escolhido=k;
+  if(n.ops[k].flag){E.flags[n.ops[k].flag]=true;salvar();}
+  desenharCena();
+}
+function avancar(){E.cena.idx++;salvar();desenharCena();}
+function concluirNaCena(id,min){if(!E.missoes[id]){E.missoes[id]=true;E.minutos+=min;salvar();}desenharCena();}
+function fecharCena(){
+  const c=cenaObj();
+  contarExposicao(c.nodes);
+  c.nodes.slice(0,E.cena.idx+1).forEach(n=>{if(n.t==="cartas")n.ids.forEach(enfileirar);});
+  if(E.cena.tipo==="cena"){ if(!E.feitas.includes(E.cena.id))E.feitas.push(E.cena.id); }
+  else{
+    E.micros[E.cena.id]=(E.micros[E.cena.id]||0)+1;
+    const q=E.cena.quem;
+    E.vinculo[q]=Math.min(5,vinc(q)+1);
+  }
+  E.cena=null;salvar();
+  puxarNovas();
+  ir("estado");
+}
+
+/* ══ TELA: REVISÃO ══ */
+let fila=[],cartaAtual=null,virada=false;
+function telaRevisao(){
+  rolarDia();puxarNovas();
+  fila=devidas();
+  if(!fila.length){
+    const proxTs=Object.values(E.cartas).map(c=>c.prox).sort((a,b)=>a-b)[0];
+    const espera=E.entrada.length;
+    $("#t-revisao").innerHTML=`<p class="eyebrow">Revisão</p><h1>Nada vencido</h1>
+      <p class="vazio">${Object.keys(E.cartas).length
+        ?`Próxima carta em ${Math.max(1,Math.round((proxTs-agora())/36e5))} h.<br>${maduras()} de ${Object.keys(E.cartas).length} maduras.
+          ${espera?`<br><br>${espera} palavras esperando na caixa de entrada — entram ${NOVAS_DIA} por dia.`:""}`
+        :"O baralho enche sozinho conforme a história avança."}</p>
+      <button class="fantasma" onclick="ir('historia')">Fazer uma cena curta</button>`;
+    return;
+  }
+  cartaAtual=fila[0];virada=false;desenharCarta();
+}
+function desenharCarta(){
+  const [id,face]=cartaAtual.split("|");
+  const c=PACOTE.cartas[id],d=E.cartas[cartaAtual];
+  const prod=face==="p";
+  const frente=prod?c.v:c.f, verso=prod?c.f:c.v;
+  const falaTxt=c.f;
+  $("#t-revisao").innerHTML=`
+    <p class="eyebrow">Revisão · ${fila.length} restante${fila.length>1?"s":""}</p>
+    <p class="direcao">${prod?"produzir · pt → "+c.lang:"reconhecer · "+c.lang+" → pt"}${d.fase==="aprend"?" · aprendendo":""}</p>
+    <div class="carta ${virada?"virada":""}" onclick="virar()">
+      <div class="frente">${esc(frente)}</div>
+      <div class="verso">${esc(verso)}${c.dica?`<div class="dica">${esc(c.dica)}</div>`:""}</div>
+    </div>
+    ${virada?`<button type="button" class="fantasma" data-ouvir="${atr(falaTxt)}" data-lang="${c.lang==="en"?"en-US":"de-DE"}">▶ ouvir</button>
+      <div class="notas">
+        <button class="b0" onclick="responder(0)">de novo</button>
+        <button onclick="responder(1)">difícil</button>
+        <button onclick="responder(2)">bom</button>
+        <button class="b3" onclick="responder(3)">fácil</button>
+      </div>
+      <p class="aviso">${prod?"Produzir é a metade cara. Errar aqui é normal."
+        :"Com 3 acertos espaçados ela amadurece — e aí volta ao contrário, para produzir."}<br>Acertos: ${d.ok}/3</p>`
+     :`<button class="principal" onclick="virar()">Mostrar</button>`}`;
+}
+function virar(){virada=true;desenharCarta();}
+function responder(q){
+  avaliar(cartaAtual,q);
+  fila=devidas();pip();
+  if(!fila.length)telaRevisao();
+  else{cartaAtual=fila[0];virada=false;desenharCarta();}
+}
+
+/* ══ TELA: DOSSIÊ ══ */
+function telaDossie(){
+  const frags=[],notas=[];
+  Object.values(PACOTE.cenas).forEach(cn=>cn.nodes.forEach(n=>{
+    if(n.t==="dossie"&&E.dossie.includes(n.id))frags.push(n);
+    if(n.t==="nota"&&E.notas.includes(n.id))notas.push(n);}));
+  $("#t-dossie").innerHTML=`
+   <p class="eyebrow">Dossiê</p><h1>Kein Name</h1>
+   <p style="color:var(--bruma);font-size:14px;margin:8px 0 0">${esc(PACOTE.arco.sinopse)}</p>
+
+   <h2>Fragmentos · ${frags.length}</h2>
+   ${frags.length?frags.map(f=>`<div class="item"><h4>${esc(f.titulo)}</h4><p style="white-space:pre-line">${esc(f.corpo)}</p></div>`).join("")
+    :`<p class="vazio" style="padding:22px">Nada recuperado ainda.</p>`}
+
+   <h2>Explicações · ${notas.length}</h2>
+   ${notas.length?notas.map(n=>`<div class="item"><h4>${esc(n.titulo)}</h4><p style="white-space:pre-line">${esc(n.corpo)}</p></div>`).join("")
+    :`<p class="vazio" style="padding:22px">Explicação aparece depois que o padrão já passou por você.</p>`}
+
+   <h2>Regras da casa</h2>
+   <div class="item"><h4>A tela mostra o seu ouvido</h4><p>Bloco = nunca separado. Borrado = ainda não gruda. Nítido = seu. Toque na palavra para forçar o foco.</p></div>
+   <div class="item"><h4>Palavra nova entra a conta-gotas</h4><p>No máximo ${NOVAS_DIA} por dia, na ordem da história. O resto espera na caixa de entrada e não vira dívida.</p></div>
+   <div class="item"><h4>Reconhecer antes de produzir</h4><p>A carta invertida (pt → alemão) só abre depois que a fácil amadurece.</p></div>
+   <div class="item"><h4>Substantivo alemão nunca anda sozinho</h4><p>Sempre com der/die/das colado.</p></div>
+   <div class="item"><h4>Inglês é A2, não zero</h4><p>Só a expressão fica embaçada. Frase inteira e fala real, nunca gramática básica.</p></div>
+   <div class="item"><h4>Sem streak</h4><p>A moeda é hora de input e palavra com borda. Faltar não quebra nada.</p></div>
+
+   <h2>Progresso</h2>
+   <p style="font-size:14px;color:var(--bruma);margin:0 0 12px">Cole este bloco na conversa com o Claude para receber o pacote seguinte.</p>
+   <textarea id="dump" readonly>${esc(exportar())}</textarea>
+   <button type="button" class="principal" style="margin-top:10px" data-copiar="${atr(exportar())}">Copiar progresso</button>
+   <button class="fantasma" onclick="zerar()">Apagar tudo e recomeçar</button>`;
+}
+function exportar(){
+  const nt=nitidezGeral();
+  const cs=Object.entries(E.cartas).map(([k,c])=>`${k}:${c.fase}/${c.ok}ok/${c.int}d`).join(", ");
+  return `KEIN NAME — pacote v${PACOTE.versao} (build ${BUILD})
+Capítulo atual: ${capAtual().titulo}
+Input: ${(E.minutos/60).toFixed(1)} h · Nitidez do alemão: ${nt.pct}% de ${nt.tot} palavras
+Cenas: ${E.feitas.join(", ")||"—"}
+Cenas curtas: ${Object.entries(E.micros).map(([k,v])=>k+"x"+v).join(", ")||"—"}
+Vínculo: ${Object.entries(E.vinculo).map(([k,v])=>k+":"+v).join(", ")||"—"}
+Escolhas: ${Object.keys(E.flags).join(", ")||"—"}
+Cartas: ${Object.keys(E.cartas).length} (maduras ${maduras()}) · fila de entrada: ${E.entrada.length}
+Estado: ${cs||"—"}
+Missões pendentes: ${Object.entries(E.missoes).filter(([,v])=>!v).map(([k])=>k).join(", ")||"nenhuma"}`;
+}
+function zerar(){if(confirm("Apagar todo o progresso?")){localStorage.removeItem(CHAVE);location.reload();}}
+
+/* ── cliques globais ── */
+document.addEventListener("click",e=>{
+  const o=e.target.closest("[data-ouvir]");
+  if(o){e.preventDefault();e.stopPropagation();return falar(o.getAttribute("data-ouvir"),o.getAttribute("data-lang")||"de-DE");}
+  const t=e.target.closest("[data-trad]");
+  if(t){e.preventDefault();e.stopPropagation();const b=t.closest(".bolha");b.classList.toggle("aberta");
+    t.textContent=b.classList.contains("aberta")?"esconder":"tradução";return;}
+  const c=e.target.closest("[data-copiar]");
+  if(c){e.preventDefault();e.stopPropagation();return copiar(c.getAttribute("data-copiar"),c);}
+  const p=e.target.closest(".p");
+  if(p){e.preventDefault();e.stopPropagation();
+    if(!p.classList.contains("clara")){p.classList.add("clara");if(p.dataset.real)p.textContent=p.dataset.real;}
+    return abrirLupa(p.dataset.k);}
+  if(!e.target.closest("#lupa"))fecharLupa();
+});
+function abrirLupa(chave){
+  const id=IDX[chave],c=id?PACOTE.cartas[id]:null;
+  const st=nitidezChave(chave),ex=E.exposicao[chave]||0;
+  const rot=["bloco · nunca separado","borrado · ainda não gruda","com borda · quase sua","nítida · sua"][st];
+  $("#lupaC").innerHTML=`<p class="w">${esc(c?c.f:chave)}</p>
+    ${c?`<p class="m">${esc(c.v)}</p>`:`<p class="m" style="font-style:italic">Palavra de ligação. Não vira carta — limpa só por encontrar de novo.</p>`}
+    <p class="s">${rot} · ${ex} encontro${ex===1?"":"s"}</p>
+    <button class="fantasma" style="margin-top:12px" data-ouvir="${atr(c?c.f:chave)}" data-lang="${c&&c.lang==="en"?"en-US":"de-DE"}">▶ ouvir</button>`;
+  const l=$("#lupa");l.hidden=false;requestAnimationFrame(()=>l.classList.add("abre"));
+}
+function fecharLupa(){const l=$("#lupa");l.classList.remove("abre");setTimeout(()=>l.hidden=true,280);}
+function copiar(t,btn){
+  const antes=btn.textContent;
+  const ok=()=>{btn.textContent="Copiado ✓";setTimeout(()=>btn.textContent=antes,1800);};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(ok).catch(()=>fb(t,ok));
+  else fb(t,ok);
+}
+function fb(t,ok){const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";
+  document.body.appendChild(ta);ta.select();try{document.execCommand("copy");ok();}catch(e){alert(t);}ta.remove();}
+
+/* ── partida ── */
+rolarDia();promoverProducao();puxarNovas();telaEstado();pip();
+if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+</script>
+</body>
+</html>

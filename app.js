@@ -30,8 +30,18 @@
   function enviar(payload, tentativas) {
     tentativas = tentativas || 3;
     payload.chave = CFG.chave; payload.form = FORM; payload.rid = E.rid;
-    return fetch(CFG.endpoint, { method: 'POST', body: JSON.stringify(payload) })
-      .then(function (r) { return r.json(); })
+    var envio;
+    if (window.google && google.script && google.script.run) {
+      envio = new Promise(function (ok, falha) {
+        google.script.run
+          .withSuccessHandler(function (txt) { ok(typeof txt === 'string' ? JSON.parse(txt) : txt); })
+          .withFailureHandler(falha)
+          .receber(JSON.stringify(payload));
+      });
+    } else {
+      envio = fetch(CFG.endpoint, { method: 'POST', body: JSON.stringify(payload) }).then(function (r) { return r.json(); });
+    }
+    return envio
       .then(function (j) { if (!j.ok) throw new Error(j.erro || 'falha'); return j; })
       .catch(function (err) {
         if (tentativas > 1) return new Promise(function (ok) { setTimeout(ok, 1500); }).then(function () { return enviar(payload, tentativas - 1); });

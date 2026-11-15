@@ -24,6 +24,11 @@
   }
   var E = carregar() || { rid: novoId(), tela: 0, aceite: false, autoriza: '', r: {}, enviado: false, inicio: new Date().toISOString() };
   function salvar() { try { localStorage.setItem(CHAVE_LOCAL, JSON.stringify(E)); } catch (e) {} }
+  function nomeAtual() {
+    var p1 = perguntas[0];
+    if (FORM === 'prof' && p1 && p1.tipo === 'curto') return ((E.r[p1.id] || {}).texto || '').trim();
+    return '';
+  }
   function resp(id) { if (!E.r[id]) E.r[id] = {}; return E.r[id]; }
 
   // ---------- envio ----------
@@ -74,7 +79,7 @@
   var gravacao = null; // {rec, stream, chunks, t0, timer, qid}
   function mimeSuportado() {
     if (!window.MediaRecorder) return null;
-    var c = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/aac'];
+    var c = ['audio/mp4;codecs=mp4a.40.2', 'audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/aac'];
     for (var i = 0; i < c.length; i++) { try { if (MediaRecorder.isTypeSupported(c[i])) return c[i]; } catch (e) {} }
     return '';
   }
@@ -119,7 +124,7 @@
       var fr = new FileReader();
       fr.onload = function () {
         var b64 = String(fr.result).split(',')[1];
-        enviar({ acao: 'audio', qid: q.id, mime: mime, dados: b64 })
+        enviar({ acao: 'audio', qid: q.id, mime: mime, dados: b64, nome: nomeAtual() })
           .then(function (j) { r.audio = { status: 'ok', url: j.url, mime: mime, dur: dur }; delete urlsLocais[q.id + '_blob']; })
           .catch(function () { r.audio = { status: 'erro', mime: mime, dur: dur }; })
           .then(function () { salvar(); if (document.body.contains(box)) pintar(); atualizarNav(); });
@@ -386,7 +391,7 @@
       if (q.tipo === 'escala' && r.valor) partes.push(String(r.valor));
       if (q.tipo === 'ordenar' && r.mexeu) partes.push(r.ordem.map(function (v, i) { return (i + 1) + 'º ' + v; }).join('; '));
       if (r.texto && r.texto.trim()) partes.push(r.texto.trim());
-      return { id: q.id, texto: q.texto, resposta: partes.join(' | '), audio: q.tipo === 'audio' };
+      return { id: q.id, secao: q.secao, texto: q.texto, resposta: partes.join(' | '), audio: q.tipo === 'audio' };
     });
   }
 
@@ -394,8 +399,7 @@
     var msg = document.getElementById('msg-envio');
     if (pendentesAudio().length) { msg.className = 'aviso warn'; msg.textContent = 'Espere os áudios terminarem de enviar.'; return; }
     btn.disabled = true; btn.textContent = 'Enviando…';
-    var nome = '';
-    var p1 = perguntas[0]; if (FORM === 'prof' && p1 && p1.tipo === 'curto') nome = ((E.r[p1.id] || {}).texto || '').trim();
+    var nome = nomeAtual();
     enviar({ acao: 'final', nome: nome, autoriza: E.autoriza, inicio: E.inicio, fim: new Date().toISOString(), itens: montarItens(), agente: navigator.userAgent })
       .then(function () { E.enviado = true; salvar(); irPara(telas.indexOf('feito')); })
       .catch(function () {
